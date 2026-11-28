@@ -170,7 +170,10 @@ vectored handler before any image code runs (`src/cpu_emulation.h`): it recognis
 address, does the same work on the thread's context and continues after the instruction. It prints one `[rt] cpu:`
 line at startup naming what the host lacks, and one the first time each instruction is emulated. On a host that has
 them the CPU runs them and the handler never sees them. Each emulated instruction costs an exception round trip, so a
-hot loop of them is slow; patching such a site in place is a later step. `cpu_emulation_test` runs every form for
+hot loop of them is slow. A `clwb` site is therefore rewritten in place at its first `#UD`: as `clflushopt`
+(same operand and length, and it writes the line back too), or as a NOP of the same length on a host without
+`clflushopt`, so a loop over a buffer faults once instead of once per cache line. `LEONIDA_CLWB_PATCH=0` turns the
+rewrite off and emulates every execution instead. `cpu_emulation_test` runs every form for
 real: natively on a Zen host, through the handler on an Intel one.
 
 `module_names` checks native and mapped renamed DLLs, distinct Unicode identities, basename cache
